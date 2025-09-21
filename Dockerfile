@@ -1,5 +1,4 @@
-# Start from the code-server Debian base image
-FROM codercom/code-server:4.9.0
+FROM codercom/code-server:latest
 
 USER coder
 
@@ -24,18 +23,31 @@ RUN sudo chown -R coder:coder /home/coder/.local
 
 # Install a VS Code extension:
 # Note: we use a different marketplace than VS Code. See https://github.com/cdr/code-server/blob/main/docs/FAQ.md#differences-compared-to-vs-code
-# RUN code-server --install-extension esbenp.prettier-vscode
+RUN code-server --install-extension esbenp.prettier-vscode 
 
 # Install apt packages:
-# RUN sudo apt-get install -y ubuntu-make
+RUN sudo apt-get install -y ubuntu-make clang gcc
 
-# Copy files: 
-# COPY deploy-container/myTool /home/coder/myTool
+# Use our custom entrypoint script first
+COPY deploy-container/entrypoint.sh /usr/bin/deploy-container-entrypoint.sh
+ENTRYPOINT ["/usr/bin/deploy-container-entrypoint.sh"]
 
-# -----------
 
-# Port
-ENV PORT=8080
+
+# 设置工作目录
+WORKDIR /app
+
+# 复制初始化脚本
+COPY init.sh /app/init.sh
+RUN chmod +x /app/init.sh
+
+
+# 暴露端口
+EXPOSE 8080
+
+# 启动命令
+CMD ["sh", "/app/init.sh"]
+
 
 # Use our custom entrypoint script first
 COPY deploy-container/entrypoint.sh /usr/bin/deploy-container-entrypoint.sh
